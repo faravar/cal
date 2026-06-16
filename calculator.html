@@ -102,10 +102,10 @@ footer{margin-top:auto;text-align:center;color:#94a3b8;font-size:12px;padding:10
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
 
 <script>
-// آدرس وب‌اپ گوگل اسکریپت خود را اینجا قرار دهید
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxLYggvPWV_AIJFVcNatti_jQoPKPrV2ADLNLzf31CyJG-0oUuQM476zjnM0izYcXsg/exec"; 
+// ۱. آدرس وب‌اپ گوگل اسکریپت خود را اینجا قرار دهید
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwd4hNKHh_hEPNVS4eBGCK4dSIPXd5uk55P2zJlGWTKJ1a1j6o0lVwJKPCnDBh8mwKm/exec"; 
 
-// متغیر حافظه گلوبال به جای لوکال استوریج برای تنظیمات ساختمان
+// متغیرهای سراسری برای نگهداری داده‌های ساختمان آهو
 let globalUnitsData = null;
 let globalMonthlyCharge = 0;
 
@@ -114,6 +114,7 @@ function showModal(msg){$('modalMsg').textContent=msg;$('ahoModal').style.displa
 $('closeModal').onclick=()=>$('ahoModal').style.display='none';
 
 function loadUnits(){
+ // خواندن اطلاعات از متغیر سراسری (گوگل شیت) به جای لوکال استوریج
  return globalUnitsData;
 }
 
@@ -132,7 +133,7 @@ function renderSettings(){
    </div></div>`;
  }
  area.innerHTML=html;
- $('monthlyCharge').value=globalMonthlyCharge|| '';
+ $('monthlyCharge').value=globalMonthlyCharge||'';
 }
 
 function hideAll(){$('inputArea').style.display='none';$('settingsArea').style.display='none';$('resultCard').style.display='none'}
@@ -144,20 +145,18 @@ $('saveSettings').onclick=()=>{
  const c=parseInt($('monthlyCharge').value)||0;
  if(c<=0){showModal('مبلغ شارژ ماهیانه نمی‌تواند خالی باشد');return;}
  
- // درخواست پسورد از مدیر قبل از ذخیره اطلاعات
+ // درخواست رمز عبور هنگام ذخیره کردن
  const password = prompt("لطفاً رمز عبور مدیریت را وارد کنید:");
- if (password === null) return; // لغو عملیات
+ if (password === null) return; 
  
  const d=names.map((n,i)=>({name:n,people:ppl[i]}));
  
  $('saveSettings').disabled = true;
  $('saveSettings').textContent = "در حال ذخیره...";
  
- // ارسال داده‌ها به دیتابیس شیت
+ // ارسال داده‌ها به دیتابیس گوگل شیت
  fetch(SCRIPT_URL, {
    method: "POST",
-   mode: "no-cors", // سازگار با استاندارد ارسال وب‌اپ گوگل اسکریپت
-   headers: { "Content-Type": "application/json" },
    body: JSON.stringify({
      action: "save",
      password: password,
@@ -167,12 +166,11 @@ $('saveSettings').onclick=()=>{
    })
  })
  .then(() => {
-   // به دلیل مود no-cors پاسخ مستقیما قابل خواندن نیست اما در صورت عدم دریافت خطا، ذخیره‌سازی لوکالِ کش آپدیت می‌شود.
    globalUnitsData = d;
    globalMonthlyCharge = c;
    $('saveSettings').disabled = false;
    $('saveSettings').textContent = "ذخیره";
-   showModal('✅ فرآیند ذخیره ارسال شد.\nاگر رمز صحیح باشد، شیت به‌روزرسانی شده است.');
+   showModal('درخواست ذخیره ارسال شد. اگر رمز درست باشد، تغییرات در شیت اعمال شده است.');
    $('settingsArea').style.display='none';
  })
  .catch(err => {
@@ -255,10 +253,11 @@ function generatePDF(){
  html2pdf().set(opt).from(wrap).save();
 }
 
+// این همان بخشی است که دنبالش بودید و اکنون کاملاً اصلاح شده است
 window.onload=()=>{
  localStorage.removeItem('water');localStorage.removeItem('gas');localStorage.removeItem('electric');
  
- // لود دیتای اولیه از دیتابیس شیت به محض باز شدن برنامه
+ // لود خودکار داده‌ها از شیت به محض بالا آمدن صفحه
  fetch(SCRIPT_URL)
  .then(res => res.json())
  .then(data => {
@@ -266,10 +265,13 @@ window.onload=()=>{
      globalUnitsData = data.units;
      globalMonthlyCharge = data.monthlyCharge;
      $('unitsCount').value = data.unitsCount;
+     console.log("داده‌ها با موفقیت لود شدند.");
    }
  })
- .catch(err => console.log("دیتابیس هنوز خالی است یا مشکلی در لود وجود دارد."));
+ .catch(err => console.log("دیتابیس خالی است یا خطایی رخ داده است."));
 }
 </script>
+</body>
+</html>
 </body>
 </html>
