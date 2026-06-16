@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="fa">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>محاسبه قبوض ساختمان آهو — V 2.1.6</title>
+
+<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
+
+<style>
+body{
+  font-family:"Vazirmatn",Tahoma;
+  direction:rtl;
+  background:linear-gradient(180deg,#e8f3ff,#f7f9fc);
+  padding:16px;min-height:100vh;
+  display:flex;flex-direction:column;
+}
+h1{text-align:center;color:#0b2c52;font-size:20px;margin-bottom:14px;}
+.card{background:#fff;border-radius:12px;padding:14px;margin-bottom:12px;
+  box-shadow:0 3px 12px rgba(0,0,0,0.06);}
+.btn-row{display:flex;gap:6px;margin-bottom:10px}
+.btn-row button{flex:1;padding:10px;border:0;border-radius:10px;color:#fff;font-size:14px;cursor:pointer}
+#btnWater{background:#0f4c81}
+#btnGas{background:linear-gradient(135deg,#f59e0b,#d97706)}
+#btnElectric{background:linear-gradient(135deg,#8b5cf6,#6d28d9)}
+button#btnSettings,button#totalButton{width:100%;margin-top:8px;padding:12px;
+  border-radius:12px;border:0;color:#fff;font-size:16px;cursor:pointer}
+#btnSettings{background:linear-gradient(135deg,#0284c7,#0369a1)}
+#totalButton{background:linear-gradient(135deg,#16a34a,#15803d)}
+label{display:block;margin-top:8px;color:#374151}
+input[type=text],input[type=number],input[type=password]{
+  width:100%;padding:10px;margin-top:6px;
+  border-radius:8px;border:1px solid #d1d5db;background:#f8fafc;font-size:15px;
+  box-sizing:border-box;
+}
+#calcBtn,#saveSettings,#pdfBtn{width:100%;padding:12px;border-radius:10px;border:0;color:#fff;font-size:15px;cursor:pointer;margin-top:10px}
+#calcBtn{background:linear-gradient(135deg,#10b981,#059669)}
+#saveSettings{background:linear-gradient(135deg,#10b981,#059669)}
+#pdfBtn{background:linear-gradient(135deg,#f59e0b,#b45309)}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{padding:8px;text-align:center;border-bottom:1px solid #e5e7eb;font-size:13px}
+th{background:#e6f0ff;color:#08345a}
+.stripe tr:nth-child(even){background:#f8fbff}
+.total-wrapper{display:flex;justify-content:center}
+.total-inner{width:100%;max-width:760px}
+.small{color:#64748b;margin-bottom:8px}
+footer{margin-top:auto;text-align:center;color:#94a3b8;font-size:12px;padding:10px 0}
+footer a{color:#0f4c81;text-decoration:underline}
+.modal-back{position:fixed;inset:0;background:rgba(0,0,0,0.35);display:none;
+  align-items:center;justify-content:center;z-index:9999}
+.modal{background:#fff;border-radius:12px;padding:16px;max-width:360px;width:90%;
+  box-shadow:0 6px 20px rgba(0,0,0,0.2);text-align:center}
+.modal h3{color:#2563eb;margin-bottom:8px}
+.modal p{color:#374151;margin-bottom:12px;font-size:14px;white-space:pre-line}
+.modal .row{display:flex;gap:8px}
+.modal button{flex:1;padding:10px;border-radius:8px;border:0;color:#fff;cursor:pointer}
+.yes{background:#10b981}.no{background:#ef4444}.ok{background:#0284c7}
+.fadeIn{opacity:0;transform:translateY(10px);animation:fadeUp .45s ease forwards}
+@keyframes fadeUp{to{opacity:1;transform:translateY(0)}}
+.unit-box{margin-bottom:10px}
+</style>
+</head>
+<body>
+<h1>محاسبه قبوض ساختمان آهو</h1>
+
+<div class="card">
+  <div class="btn-row">
+    <button id="btnWater">💧 قبض آب</button>
+    <button id="btnGas">🔥 قبض گاز</button>
+    <button id="btnElectric">⚡ قبض برق</button>
+  </div>
+  <button id="btnSettings">⚙️ تنظیمات</button>
+  <button id="totalButton">💰 جمع کل قبوض</button>
+</div>
+
+<div id="inputArea" class="card" style="display:none">
+  <h3 id="billTitle"></h3>
+  <label>مبلغ کل قبض (تومان)</label>
+  <input id="billTotal" type="number" placeholder="مثلاً 250000">
+  <button id="calcBtn">محاسبه</button>
+</div>
+
+<div id="settingsArea" class="card" style="display:none">
+  <h3>تنظیمات</h3>
+  <label>💰 مبلغ شارژ ماهیانه (تومان)</label>
+  <input id="monthlyCharge" type="number" placeholder="مثلاً 150000">
+  <label style="margin-top:12px">تعداد واحدها</label>
+  <input id="unitsCount" type="number" min="1" value="3">
+  <div id="unitsList" style="margin-bottom:20px"></div>
+  <button id="saveSettings">ذخیره</button>
+</div>
+
+<div id="resultCard" class="card" style="display:none">
+  <h3 id="resultTitle">نتایج</h3>
+  <div id="resultsTableWrap"></div>
+</div>
+
+<footer>تمامی حقوق برای کریم‌زاده | <a href="https://www.karimzaadeh.ir" target="_blank" rel="noopener">www.karimzaadeh.ir</a> محفوظ است - V 2.1.6</footer>
+
+<div id="ahoModal" class="modal-back"><div class="modal"><h3>ساختمان آهو</h3><p id="modalMsg"></p><div class="row"><button class="ok" id="closeModal">باشه</button></div></div></div>
+<div id="confirmModal" class="modal-back"><div class="modal"><h3>ساختمان آهو</h3><p>آیا مبلغ شارژ ماهیانه نیز محاسبه گردد؟</p><div class="row"><button class="yes" id="yesCharge">بله</button><button class="no" id="noCharge">خیر</button></div></div></div>
+<div id="passModal" class="modal-back"><div class="modal"><h3>تایید هویت</h3><p>برای ذخیره تنظیمات روی سرور، رمز عبور را وارد کنید</p><input id="passInput" type="password" placeholder="رمز عبور"><div class="row" style="margin-top:12px"><button class="yes" id="passConfirm">ذخیره</button><button class="no" id="passCancel">انصراف</button></div></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+
+<script>
+const $=id=>document.getElementById(id);
+function showModal(msg){$('modalMsg').textContent=msg;$('ahoModal').style.display='flex'}
+$('closeModal').onclick=()=>$('ahoModal').style.display='none';
+
+/* ====================== اتصال به Google Sheet (بک‌اند تنظیمات) ======================
+   بعد از دیپلوی Code.gs به‌عنوان Web App، آدرس exec را اینجا جایگزین کنید.        */
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyd5Eoy4HkMkIKJ1VdoHNLRIfPAcFkV9qHEdgcaYS-7x3RTeKilEKaBS4OTIZrO55hx8A/exec';
+
+let appSettings = null;        // { monthlyCharge:Number, units:[{name,people},...] }
+let settingsLoadPromise = null;
+let pendingSettingsData = null;
+
+function cacheSettingsLocally(s){
+  try{ localStorage.setItem('aho_settings_cache', JSON.stringify(s)); }catch(e){}
+}
+function getLocalCache(){
+  try{ const r = localStorage.getItem('aho_settings_cache'); return r ? JSON.parse(r) : null; }
+  catch(e){ return null; }
+}
+function fetchSettingsFromServer(){
+  return fetch(SCRIPT_URL + '?action=load&t=' + Date.now())
+    .then(r=>r.json())
+    .then(res=>{
+      if(res && res.success){
+        appSettings = res.data || null;
+        if(appSettings) cacheSettingsLocally(appSettings);
+      }
+      return appSettings;
+    })
+    .catch(()=>{
+      const cached = getLocalCache();
+      if(cached) appSettings = cached;
+      return appSettings;
+    });
+}
+function ensureSettingsLoaded(){
+  if(appSettings) return Promise.resolve(appSettings);
+  if(!settingsLoadPromise) settingsLoadPromise = fetchSettingsFromServer();
+  return settingsLoadPromise;
+}
+function saveSettingsToServer(data,password){
+  return fetch(SCRIPT_URL,{
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({action:'save',password:password,data:data})
+  }).then(r=>r.json());
+}
+function loadUnits(){ return appSettings ? appSettings.units : null; }
+/* ====================================================================================== */
+
+function roundUpTo500(v){return Math.ceil(v/500)*500}
+
+function renderSettings(){
+ const area=$('unitsList');
+ const c=parseInt($('unitsCount').value)||1;
+ const ex=appSettings?appSettings.units:null;let html='';
+ for(let i=1;i<=c;i++){
+  const p=ex&&ex[i-1]?ex[i-1]:{name:'',people:1};
+  html+=`<div class="unit-box"><label>واحد ${i}</label>
+   <div style="display:flex;gap:6px;margin-top:6px">
+     <input type="text" class="unitName" data-i="${i-1}" value="${p.name}" placeholder="نام واحد">
+     <input type="number" min="1" class="unitPeople" data-i="${i-1}" value="${p.people}" placeholder="نفرات">
+   </div></div>`;
+ }
+ area.innerHTML=html;
+ $('monthlyCharge').value = appSettings ? (appSettings.monthlyCharge||'') : '';
+}
+function hideAll(){$('inputArea').style.display='none';$('settingsArea').style.display='none';$('resultCard').style.display='none'}
+
+$('btnSettings').onclick=async ()=>{
+ hideAll();$('settingsArea').style.display='block';
+ await ensureSettingsLoaded();
+ if(appSettings&&appSettings.units) $('unitsCount').value=appSettings.units.length;
+ renderSettings();
+};
+
+$('saveSettings').onclick=()=>{
+ const names=[...document.querySelectorAll('.unitName')].map(i=>i.value.trim());
+ const ppl=[...document.querySelectorAll('.unitPeople')].map(i=>parseInt(i.value)||0);
+ const c=parseInt($('monthlyCharge').value)||0;
+ if(c<=0){showModal('مبلغ شارژ ماهیانه نمی‌تواند خالی باشد');return;}
+ const d=names.map((n,i)=>({name:n,people:ppl[i]}));
+ pendingSettingsData={monthlyCharge:c,units:d};
+ $('passInput').value='';
+ $('passModal').style.display='flex';
+};
+$('passCancel').onclick=()=>{$('passModal').style.display='none';};
+$('passConfirm').onclick=async ()=>{
+ const pwd=$('passInput').value;
+ if(!pwd){showModal('رمز عبور را وارد کنید');return;}
+ $('passModal').style.display='none';
+ try{
+   const res=await saveSettingsToServer(pendingSettingsData,pwd);
+   if(res&&res.success){
+     appSettings=pendingSettingsData;
+     cacheSettingsLocally(appSettings);
+     showModal('✅ تنظیمات ذخیره شد');
+     $('settingsArea').style.display='none';
+   }else{
+     showModal('❌ '+((res&&res.message)||'رمز عبور اشتباه است یا خطایی رخ داد'));
+   }
+ }catch(err){
+   showModal('❌ خطا در ارتباط با سرور. اتصال اینترنت را بررسی کنید.');
+ }
+};
+
+let currentType=null;
+function showBillInput(t){currentType=t;hideAll();$('inputArea').style.display='block';
+ const m={water:'محاسبه قبض آب',gas:'محاسبه قبض گاز',electric:'محاسبه قبض برق'};
+ $('billTitle').textContent=m[t];$('billTotal').value='';}
+$('btnWater').onclick=()=>showBillInput('water');
+$('btnGas').onclick=()=>showBillInput('gas');
+$('btnElectric').onclick=()=>showBillInput('electric');
+
+$('calcBtn').onclick=async ()=>{
+ await ensureSettingsLoaded();
+ const units=loadUnits();if(!units){showModal('ابتدا تنظیمات را انجام دهید 🔧');return;}
+ const total=parseFloat($('billTotal').value)||0;if(total<=0){showModal('مبلغ قبض را وارد کنید');return;}
+ let rows=[];if(currentType==='water'){const tp=units.reduce((s,u)=>s+u.people,0);
+  if(tp===0){showModal('تعداد نفرات صفر است!');return;}
+  units.forEach(u=>{const a=roundUpTo500((u.people/tp)*total);rows.push({name:u.name||'—',people:u.people,amount:a});});
+ }else{const per=roundUpTo500(total/units.length);
+  units.forEach(u=>rows.push({name:u.name||'—',people:u.people,amount:per}));}
+ localStorage.setItem(currentType,JSON.stringify(rows));showResults(rows,total);
+};
+function showResults(rows,total){
+ hideAll();$('resultCard').style.display='block';$('resultCard').classList.add('fadeIn');
+ const m={water:'نتایج قبض آب',gas:'نتایج قبض گاز',electric:'نتایج قبض برق'};
+ $('resultTitle').textContent=m[currentType];
+ let h=`<div class="small">مبلغ کل: ${Number(total).toLocaleString()} تومان</div>`;
+ h+=`<table><thead><tr><th>واحد</th><th>نفرات</th><th>سهم (تومان)</th></tr></thead><tbody>`;
+ rows.forEach(r=>{h+=`<tr><td>${r.name}</td><td>${r.people}</td><td>${r.amount.toLocaleString()}</td></tr>`});
+ h+='</tbody></table>';$('resultsTableWrap').innerHTML=h;
+}
+$('totalButton').onclick=async ()=>{
+ await ensureSettingsLoaded();
+ const w=JSON.parse(localStorage.getItem('water'))||[];
+ const g=JSON.parse(localStorage.getItem('gas'))||[];
+ const e=JSON.parse(localStorage.getItem('electric'))||[];
+ if(!w.length&&!g.length&&!e.length){showModal('هیچ قبضی وارد نشده است.');return;}
+ $('confirmModal').style.display='flex';
+ $('yesCharge').onclick=()=>{$('confirmModal').style.display='none';showTotals(true)};
+ $('noCharge').onclick=()=>{$('confirmModal').style.display='none';showTotals(false)};
+};
+function showTotals(ic){
+ const w=JSON.parse(localStorage.getItem('water'))||[];
+ const g=JSON.parse(localStorage.getItem('gas'))||[];
+ const e=JSON.parse(localStorage.getItem('electric'))||[];
+ const c=appSettings?(appSettings.monthlyCharge||0):0;
+ const t={};function add(b,k){b.forEach(r=>{const n=r.name||'—';if(!t[n])t[n]={water:0,gas:0,electric:0};t[n][k]+=r.amount;});}
+ add(w,'water');add(g,'gas');add(e,'electric');
+ let h=`<div class="total-wrapper"><div class="total-inner"><table id="finalTable" class="stripe"><thead><tr><th>واحد</th><th>آب 💧</th><th>گاز 🔥</th><th>برق ⚡</th>`;
+ if(ic)h+='<th>شارژ 💰</th>';h+='<th>جمع کل 💰</th></tr></thead><tbody>';
+ for(const [n,v] of Object.entries(t)){
+  const sum=v.water+v.gas+v.electric+(ic?c:0);
+  h+=`<tr><td>${n}</td><td>${v.water.toLocaleString()}</td><td>${v.gas.toLocaleString()}</td><td>${v.electric.toLocaleString()}</td>`;
+  if(ic)h+=`<td>${c.toLocaleString()}</td>`;
+  h+=`<td style="color:#16a34a;font-weight:bold">${sum.toLocaleString()}</td></tr>`;
+ }h+='</tbody></table>';
+ h+='<button id="pdfBtn">📄 دانلود PDF</button></div></div>';
+ $('resultsTableWrap').innerHTML=h;
+ $('resultCard').style.display='block';$('resultTitle').textContent='💰 جمع کل قبوض';
+ $('pdfBtn').onclick=()=>generatePDF();
+}
+function generatePDF(){
+ const opt={margin:10,filename:'قبوض_ساختمان_آهو.pdf',image:{type:'jpeg',quality:0.98},
+  html2canvas:{scale:2,useCORS:true},jsPDF:{unit:'pt',format:'a4',orientation:'portrait'}};
+ const node=document.querySelector('.total-inner');
+ const dt=new Date();
+ const footer=`چاپ شده در ${dt.toLocaleDateString('fa-IR')} ساعت ${dt.getHours()}:${dt.getMinutes().toString().padStart(2,'0')}`;
+ const wrap=document.createElement('div');
+ wrap.style.fontFamily='"Vazirmatn"';wrap.style.direction='rtl';
+ wrap.innerHTML=`<h3 style="text-align:center;color:#0b2c52">ساختمان آهو - جمع کل قبوض</h3>`+node.outerHTML+
+ `<div style="text-align:left;font-size:12px;margin-top:8px">${footer}</div>`;
+ html2pdf().set(opt).from(wrap).save();
+}
+window.onload=()=>{
+ localStorage.removeItem('water');localStorage.removeItem('gas');localStorage.removeItem('electric');
+ const cached=getLocalCache();
+ if(cached) appSettings=cached;
+ ensureSettingsLoaded().then(()=>{
+   if(appSettings&&appSettings.units) $('unitsCount').value=appSettings.units.length;
+ });
+};
+</script>
+</body>
+</html>
