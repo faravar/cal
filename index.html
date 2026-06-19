@@ -58,6 +58,21 @@ footer a{color:#0f4c81;text-decoration:underline}
 .fadeIn{opacity:0;transform:translateY(10px);animation:fadeUp .45s ease forwards}
 @keyframes fadeUp{to{opacity:1;transform:translateY(0)}}
 .unit-box{margin-bottom:10px}
+.page-footer {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 400;
+      border-top: 1px solid var(--border); padding: 0.9rem 2.5rem;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(10,10,10,0.95); backdrop-filter: blur(16px);
+    }
+    /* فضای پایین صفحه تا زیر footer مخفی نشه */
+    .page { padding-bottom: 52px; }
+    .footer-copy { font-size: 0.72rem; color: var(--muted); }
+    .footer-top {
+      font-size: 0.72rem; color: var(--muted); text-decoration: none;
+      letter-spacing: 0.08em; text-transform: uppercase; transition: color 0.2s;
+    }
+    .footer-top:hover { color: var(--accent); }
+  
 </style>
 </head>
 <body>
@@ -308,4 +323,8 @@ window.onload=()=>{
 };
 </script>
 </body>
+  <footer class="page-footer">
+    <span class="footer-copy"><a href="https://www.karimzaadeh.ir" target="_blank">© 1405 فرهاد کریم‌زاده | www.karimzaadeh.ir</a></span>
+    <a href="#" class="footer-top" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">↑ بالا</a>
+  </footer>
 </html>
